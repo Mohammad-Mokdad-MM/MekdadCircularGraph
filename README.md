@@ -40,10 +40,6 @@ You can:
   - `region_names.csv` – 86 region names
   - `color_map.csv` – RGB triplets per region
 
-## Example output
-
-![Circular graph](<img width="1536" height="759" alt="Circle-plot-ShowAll" src="https://github.com/user-attachments/assets/a575ac0e-bab6-4cc8-81ab-d5186d27b095" />
-)
 
 ## Installation
 
