@@ -42,7 +42,7 @@ You can:
 
 ## Example output
 
-![Circular graph](<img width="1536" height="759" alt="Circle-plot-ShowAll" src="https://github.com/user-attachments/assets/6e1776ae-169b-469b-be97-b3e64debc555" />
+![Circular graph](<img width="1536" height="759" alt="Circle-plot-ShowAll" src="https://github.com/user-attachments/assets/a575ac0e-bab6-4cc8-81ab-d5186d27b095" />
 )
 
 ## Installation
