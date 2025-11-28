@@ -1,0 +1,21 @@
+############################################################
+# Requirements for Mekdad Circular Brain Connectivity Graph
+# For installation:
+#    pip install -r requirements.txt
+############################################################
+
+# Numerical computing and matrix operations
+numpy>=1.24.0
+
+# Data loading and CSV processing
+pandas>=2.0.0
+
+# Graph drawing and plotting
+matplotlib>=3.7.0
+
+# Optional visualization (commented by default)
+# seaborn>=0.13.0
+
+############################################################
+# End of requirements file
+############################################################
