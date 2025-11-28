@@ -40,6 +40,12 @@ You can:
   - `region_names.csv` – 86 region names
   - `color_map.csv` – RGB triplets per region
 
+## Features
+- Circular layout of brain regions
+- Colored lobes
+- Clickable nodes
+- Easy dataset replacement
+
 ## Example visualization
 
 ![Graph](images/Circle-plot-ShowAll.png)
