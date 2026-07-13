@@ -98,8 +98,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      packages: read
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
       - name: Install Apptainer
         run: |
           sudo apt-get update
@@ -108,16 +110,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes apptainer
 
-      - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | apptainer registry login --username "${{ github.actor }}" --password-stdin docker://ghcr.io
-
-      - name: Build SIF from the published OCI image
-        env:
-          IMAGE: ${{ needs.docker.outputs.image }}
-        run: apptainer build mekdad-circular-graph.sif "docker://${IMAGE}"
+      - name: Build SIF from the Apptainer definition
+        run: sudo apptainer build mekdad-circular-graph.sif Apptainer.def
 
       - name: Smoke-test SIF
-        run: apptainer run mekdad-circular-graph.sif --help
+        run: |
+          mkdir -p output
+          apptainer run --cleanenv \
+            --bind "$PWD/output:/output" \
+            mekdad-circular-graph.sif \
+            --output /output/smoke-test.png --dpi 72
+          test -s output/smoke-test.png
 
       - name: Upload SIF workflow artifact
         uses: actions/upload-artifact@v6

@@ -183,4 +183,4 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The workflow publishes Docker tags `1.0.0`, `1.0`, `1`, and `latest`, then creates the corresponding GitHub Release with the SIF attached. No registry password is required because the workflow uses GitHub's repository token.
+The workflow publishes Docker tags `1.0.0`, `1.0`, `1`, and `latest`, builds and tests the matching source revision with `Apptainer.def`, then creates the corresponding GitHub Release with the SIF attached. No registry password is required because the workflow uses GitHub's repository token.
