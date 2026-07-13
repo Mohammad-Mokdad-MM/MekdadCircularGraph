@@ -1,5 +1,6 @@
 import argparse
 import os
+from contextlib import redirect_stdout
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -131,14 +132,11 @@ def main():
     my_labels = [str(names[i]) for i in range(len(x))]
     
     print("\nCreating circular graph...")
-    if args.web:
-        browser_host = "localhost" if args.host in {"0.0.0.0", "127.0.0.1"} else args.host
-        print(f"Open http://{browser_host}:{args.port} in your browser.", flush=True)
     graph = CircularGraph(
         x,
         colormap=color_map,
         labels=my_labels,
-        show=args.output is None,
+        show=False,
     )
 
     if args.output is not None:
@@ -146,8 +144,18 @@ def main():
         graph.fig.savefig(args.output, dpi=args.dpi, bbox_inches="tight")
         print(f"Graph saved to {args.output}")
     elif args.web:
+        import matplotlib.pyplot as plt
+
+        browser_host = "localhost" if args.host in {"0.0.0.0", "127.0.0.1"} else args.host
+        print(f"Open http://{browser_host}:{args.port} in your browser.", flush=True)
+        print("Press Ctrl+C to stop the server.", flush=True)
+        with open(os.devnull, "w") as devnull, redirect_stdout(devnull):
+            plt.show()
         print("Web server stopped.")
     else:
+        import matplotlib.pyplot as plt
+
+        plt.show()
         print("Graph created successfully! Close the window to exit.")
 
 
