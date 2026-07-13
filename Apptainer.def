@@ -27,15 +27,14 @@ From: debian:bookworm-slim
 
 %environment
     export PATH="/opt/venv/bin:$PATH"
-    export MPLBACKEND=Agg
     export MPLCONFIGDIR=/tmp/matplotlib
+    export MEKDAD_DEFAULT_MODE=web
+    export MEKDAD_WEB_HOST=127.0.0.1
+    export MEKDAD_WEB_PORT=8000
     export PYTHONDONTWRITEBYTECODE=1
     export PYTHONUNBUFFERED=1
 
 %runscript
-    if [ "$#" -eq 0 ]; then
-        set -- --output /output/circular_graph.png
-    fi
     exec /opt/venv/bin/python /app/main.py "$@"
 
 %test

@@ -33,6 +33,14 @@ pip install -r requirements.txt
 python main.py
 ```
 
+To use the same browser interface as the containers:
+
+```bash
+python main.py --web
+```
+
+Then open <http://localhost:8000>. Press `Ctrl+C` in the terminal to stop the server.
+
 To render without a graphical display:
 
 ```bash
@@ -45,30 +53,38 @@ Use `python main.py --help` for the threshold and image-resolution options.
 
 ### Use the prebuilt image
 
-The latest stable image is public on GitHub Container Registry. Run these commands from a writable directory, not a protected system directory such as `C:\Windows\System32`.
+The latest stable image is public on GitHub Container Registry. It serves the interactive graph in the user's browser by default.
 
 On Linux or macOS:
 
 ```bash
 docker pull ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
-mkdir -p output
 docker run --rm \
-  --mount type=bind,source="$(pwd)/output",target=/output \
+  --publish 127.0.0.1:8000:8000 \
   ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
 ```
 
 On Windows PowerShell:
 
 ```powershell
-$outputDir = Join-Path $HOME "MekdadCircularGraph-output"
-New-Item -ItemType Directory -Force -Path $outputDir
 docker pull ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
 docker run --rm `
-  --mount "type=bind,source=$outputDir,target=/output" `
+  --publish 127.0.0.1:8000:8000 `
   ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
 ```
 
-The generated file is `circular_graph.png` in the host `output` directory. Use `:edge` for the newest build from `main`, or a release version such as `:1.0.0` for a reproducible run.
+Open <http://localhost:8000>, then click nodes or the region controls in the graph. Press `Ctrl+C` in the terminal to stop the container. Use `:edge` for the newest build from `main`, or a release version such as `:1.1.0` for a reproducible run.
+
+To create a PNG instead, mount a writable directory and select output mode:
+
+```powershell
+$outputDir = Join-Path $HOME "MekdadCircularGraph-output"
+New-Item -ItemType Directory -Force -Path $outputDir
+docker run --rm `
+  --mount "type=bind,source=$outputDir,target=/output" `
+  ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest `
+  --output /output/circular_graph.png
+```
 
 ### Run from Docker Desktop
 
@@ -76,11 +92,11 @@ Docker Desktop can run the container through its graphical interface after the i
 
 1. Open **Images** and find `ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph`.
 2. Select **Run**, then expand **Optional settings**.
-3. Add a volume whose host path is a writable output folder and whose container path is `/output`.
-4. Select **Run**. No port mapping is needed.
-5. Open the host output folder and check for `circular_graph.png`.
+3. Add a port mapping from host port `8000` to container port `8000`.
+4. Select **Run**.
+5. Open <http://localhost:8000> in your browser.
 
-The container renders the graph and exits, so it may appear as stopped in Docker Desktop after a successful run.
+Stop the container from Docker Desktop when you finish using the graph.
 
 ### Build locally
 
@@ -90,33 +106,20 @@ Build the image from the repository directory:
 docker build -t mekdad-circular-graph .
 ```
 
-The container renders `/output/circular_graph.png` by default. On Linux or macOS:
-
-```bash
-mkdir -p output
-docker run --rm \
-  --user "$(id -u):$(id -g)" \
-  --mount type=bind,source="$(pwd)/output",target=/output \
-  mekdad-circular-graph
-```
-
-On Windows PowerShell:
-
-```powershell
-New-Item -ItemType Directory -Force output
-docker run --rm `
-  --mount "type=bind,source=$($PWD.Path)\output,target=/output" `
-  mekdad-circular-graph
-```
-
-Arguments after the image name override the default command. For example:
+Run the locally built image and open <http://localhost:8000>:
 
 ```bash
 docker run --rm \
-  --user "$(id -u):$(id -g)" \
-  --mount type=bind,source="$(pwd)/output",target=/output \
-  mekdad-circular-graph --threshold 0.9 --dpi 300 \
-  --output /output/threshold-090.png
+  --publish 127.0.0.1:8000:8000 \
+  mekdad-circular-graph
+```
+
+Application options can be passed after the image name. For example, this changes the threshold in web mode:
+
+```bash
+docker run --rm \
+  --publish 127.0.0.1:8000:8000 \
+  mekdad-circular-graph --threshold 0.9
 ```
 
 ### Interactive Docker window on Linux
@@ -133,19 +136,18 @@ docker run --rm -it \
 xhost -local:docker
 ```
 
-Docker Desktop on Windows or macOS requires a separately configured X server. Headless image rendering is the portable option on those platforms.
+Docker Desktop on Windows or macOS requires a separately configured X server for a native desktop window. The default browser interface does not require one.
 
 ## Apptainer
 
-Apptainer runs on Linux. Each tagged GitHub Release includes a ready-to-run `mekdad-circular-graph.sif` file and a matching SHA-256 checksum. Download both from the repository's **Releases** page, then run:
+Apptainer runs on Linux. Each tagged GitHub Release includes a ready-to-run `mekdad-circular-graph.sif` file and a matching SHA-256 checksum. Download both from the repository's **Releases** page, then start the interactive browser interface:
 
 ```bash
 sha256sum --check mekdad-circular-graph.sif.sha256
-mkdir -p output
-apptainer run --cleanenv \
-  --bind "$PWD/output:/output" \
-  mekdad-circular-graph.sif
+apptainer run --cleanenv mekdad-circular-graph.sif
 ```
+
+Open <http://localhost:8000>. Press `Ctrl+C` in the terminal to stop the container.
 
 To build independently from the repository definition:
 
@@ -155,18 +157,16 @@ apptainer build circular-graph.sif Apptainer.def
 
 If the host requires an unprivileged build, use `apptainer build --fakeroot` or build through an Apptainer remote builder configured by your institution.
 
-Render the default image:
+Run the locally built SIF interactively:
+
+```bash
+apptainer run --cleanenv circular-graph.sif
+```
+
+To render a PNG instead, bind a writable output directory and select output mode:
 
 ```bash
 mkdir -p output
-apptainer run \
-  --bind "$PWD/output:/output" \
-  circular-graph.sif
-```
-
-Pass application options after the image path:
-
-```bash
 apptainer run \
   --bind "$PWD/output:/output" \
   circular-graph.sif --threshold 0.9 \

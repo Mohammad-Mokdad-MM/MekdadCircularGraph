@@ -8,8 +8,10 @@ LABEL org.opencontainers.image.title="Mekdad Circular Graph" \
 ENV DEBIAN_FRONTEND=noninteractive \
     VIRTUAL_ENV=/opt/venv \
     PATH="/opt/venv/bin:$PATH" \
-    MPLBACKEND=Agg \
     MPLCONFIGDIR=/tmp/matplotlib \
+    MEKDAD_DEFAULT_MODE=web \
+    MEKDAD_WEB_HOST=0.0.0.0 \
+    MEKDAD_WEB_PORT=8000 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
@@ -37,5 +39,6 @@ RUN useradd --create-home --uid 10001 appuser \
 
 USER appuser
 
+EXPOSE 8000
+
 ENTRYPOINT ["python", "main.py"]
-CMD ["--output", "/output/circular_graph.png"]

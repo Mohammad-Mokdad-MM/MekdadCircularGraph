@@ -13,6 +13,9 @@ pandas>=2.0.0
 # Graph drawing and plotting
 matplotlib>=3.7.0
 
+# WebSocket server used by Matplotlib's browser-based WebAgg backend
+tornado>=6.3
+
 # Optional visualization (commented by default)
 # seaborn>=0.13.0
 

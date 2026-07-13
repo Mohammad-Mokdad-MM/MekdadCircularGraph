@@ -36,6 +36,8 @@ jobs:
             tag="${GITHUB_REF_NAME#v}"
           elif [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
             tag="edge"
+          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            tag="pr-${{ github.event.number }}"
           else
             tag="sha-${GITHUB_SHA}"
           fi
@@ -79,9 +81,28 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Smoke-test pull request image
-        if: github.event_name == 'pull_request'
-        run: docker run --rm "${REGISTRY}/${IMAGE_NAME}:pr-${{ github.event.number }}" --help
+      - name: Start interactive Docker container
+        run: |
+          docker run --detach --name circular-graph-smoke \
+            --publish 127.0.0.1:8000:8000 \
+            "${{ steps.image.outputs.image }}"
+
+      - name: Smoke-test Docker web interface
+        run: |
+          for _ in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8000/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent --show-error http://127.0.0.1:8000/1 >/dev/null
+          curl --fail --silent --show-error http://127.0.0.1:8000/js/mpl.js >/dev/null
+          docker exec circular-graph-smoke python -c \
+            "from tornado.ioloop import IOLoop; from tornado.websocket import websocket_connect; connection = IOLoop.current().run_sync(lambda: websocket_connect('ws://127.0.0.1:8000/1/ws')); connection.close()"
+
+      - name: Stop interactive Docker container
+        if: always()
+        run: docker rm --force circular-graph-smoke || true
 
       - name: Generate image attestation
         if: github.event_name != 'pull_request'
@@ -121,6 +142,26 @@ jobs:
             mekdad-circular-graph.sif \
             --output /output/smoke-test.png --dpi 72
           test -s output/smoke-test.png
+
+      - name: Smoke-test SIF web interface
+        run: |
+          apptainer run --cleanenv mekdad-circular-graph.sif >webagg.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for _ in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:8000/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent --show-error http://127.0.0.1:8000/1 >/dev/null
+          curl --fail --silent --show-error http://127.0.0.1:8000/js/mpl.js >/dev/null
+          apptainer exec --cleanenv mekdad-circular-graph.sif \
+            /opt/venv/bin/python -c \
+            "from tornado.ioloop import IOLoop; from tornado.websocket import websocket_connect; connection = IOLoop.current().run_sync(lambda: websocket_connect('ws://127.0.0.1:8000/1/ws')); connection.close()"
+          kill "$server_pid" 2>/dev/null || true
+          wait "$server_pid" 2>/dev/null || true
+          trap - EXIT
 
       - name: Create SIF checksum
         run: sha256sum mekdad-circular-graph.sif > mekdad-circular-graph.sif.sha256

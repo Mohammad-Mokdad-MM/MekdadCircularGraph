@@ -1,8 +1,8 @@
 import argparse
+import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from circular_graph import CircularGraph
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -27,13 +27,50 @@ def parse_args():
         action="store_true",
         help="Open the interactive window (the default outside a container).",
     )
+    destination.add_argument(
+        "--web",
+        action="store_true",
+        help="Serve the interactive graph in a web browser.",
+    )
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("MEKDAD_WEB_HOST", "127.0.0.1"),
+        help="Address for web mode to listen on (default: 127.0.0.1).",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("MEKDAD_WEB_PORT", "8000")),
+        help="Port for web mode (default: 8000).",
+    )
     parser.add_argument(
         "--dpi",
         type=int,
         default=150,
         help="Resolution of the saved image (default: 150).",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if (
+        args.output is None
+        and not args.interactive
+        and not args.web
+        and os.environ.get("MEKDAD_DEFAULT_MODE") == "web"
+    ):
+        args.web = True
+    return args
+
+
+def configure_matplotlib(args):
+    import matplotlib
+
+    if args.output is not None:
+        matplotlib.use("Agg")
+    elif args.web:
+        matplotlib.use("WebAgg")
+        matplotlib.rcParams["webagg.address"] = args.host
+        matplotlib.rcParams["webagg.port"] = args.port
+        matplotlib.rcParams["webagg.port_retries"] = 1
+        matplotlib.rcParams["webagg.open_in_browser"] = False
 
 
 def main():
@@ -43,6 +80,11 @@ def main():
         raise SystemExit("--threshold must be zero or greater")
     if args.dpi <= 0:
         raise SystemExit("--dpi must be greater than zero")
+    if not 1 <= args.port <= 65535:
+        raise SystemExit("--port must be between 1 and 65535")
+
+    configure_matplotlib(args)
+    from circular_graph import CircularGraph
 
     print("Loading data...")
     matrix = pd.read_csv(BASE_DIR / 'surface_native_net_matrix.csv', index_col=0)
@@ -89,6 +131,9 @@ def main():
     my_labels = [str(names[i]) for i in range(len(x))]
     
     print("\nCreating circular graph...")
+    if args.web:
+        browser_host = "localhost" if args.host in {"0.0.0.0", "127.0.0.1"} else args.host
+        print(f"Open http://{browser_host}:{args.port} in your browser.", flush=True)
     graph = CircularGraph(
         x,
         colormap=color_map,
@@ -100,6 +145,8 @@ def main():
         args.output.parent.mkdir(parents=True, exist_ok=True)
         graph.fig.savefig(args.output, dpi=args.dpi, bbox_inches="tight")
         print(f"Graph saved to {args.output}")
+    elif args.web:
+        print("Web server stopped.")
     else:
         print("Graph created successfully! Close the window to exit.")
 
