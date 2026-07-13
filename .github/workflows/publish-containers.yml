@@ -122,15 +122,31 @@ jobs:
             --output /output/smoke-test.png --dpi 72
           test -s output/smoke-test.png
 
+      - name: Create SIF checksum
+        run: sha256sum mekdad-circular-graph.sif > mekdad-circular-graph.sif.sha256
+
       - name: Upload SIF workflow artifact
         uses: actions/upload-artifact@v6
         with:
           name: mekdad-circular-graph-sif-${{ github.ref_name }}
-          path: mekdad-circular-graph.sif
+          path: |
+            mekdad-circular-graph.sif
+            mekdad-circular-graph.sif.sha256
           if-no-files-found: error
 
       - name: Publish SIF in GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "$GITHUB_REF_NAME" mekdad-circular-graph.sif --generate-notes --verify-tag
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" \
+              mekdad-circular-graph.sif \
+              mekdad-circular-graph.sif.sha256 \
+              --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              mekdad-circular-graph.sif \
+              mekdad-circular-graph.sif.sha256 \
+              --generate-notes --verify-tag
+          fi

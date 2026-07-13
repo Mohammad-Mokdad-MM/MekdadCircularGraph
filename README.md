@@ -45,16 +45,42 @@ Use `python main.py --help` for the threshold and image-resolution options.
 
 ### Use the prebuilt image
 
-The latest stable image is published on GitHub Container Registry:
+The latest stable image is public on GitHub Container Registry. Run these commands from a writable directory, not a protected system directory such as `C:\Windows\System32`.
+
+On Linux or macOS:
 
 ```bash
 docker pull ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
+mkdir -p output
 docker run --rm \
   --mount type=bind,source="$(pwd)/output",target=/output \
   ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
 ```
 
-Use `:edge` for the newest build from `main`, or a release version such as `:1.0.0` for a reproducible run. The GHCR package must be made public after its first publication for anonymous pulls.
+On Windows PowerShell:
+
+```powershell
+$outputDir = Join-Path $HOME "MekdadCircularGraph-output"
+New-Item -ItemType Directory -Force -Path $outputDir
+docker pull ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
+docker run --rm `
+  --mount "type=bind,source=$outputDir,target=/output" `
+  ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
+```
+
+The generated file is `circular_graph.png` in the host `output` directory. Use `:edge` for the newest build from `main`, or a release version such as `:1.0.0` for a reproducible run.
+
+### Run from Docker Desktop
+
+Docker Desktop can run the container through its graphical interface after the image has been pulled once:
+
+1. Open **Images** and find `ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph`.
+2. Select **Run**, then expand **Optional settings**.
+3. Add a volume whose host path is a writable output folder and whose container path is `/output`.
+4. Select **Run**. No port mapping is needed.
+5. Open the host output folder and check for `circular_graph.png`.
+
+The container renders the graph and exits, so it may appear as stopped in Docker Desktop after a successful run.
 
 ### Build locally
 
@@ -111,23 +137,17 @@ Docker Desktop on Windows or macOS requires a separately configured X server. He
 
 ## Apptainer
 
-Apptainer runs on Linux. Each tagged GitHub Release includes a ready-to-run `mekdad-circular-graph.sif` file. Download it from the repository's **Releases** page, then run:
+Apptainer runs on Linux. Each tagged GitHub Release includes a ready-to-run `mekdad-circular-graph.sif` file and a matching SHA-256 checksum. Download both from the repository's **Releases** page, then run:
 
 ```bash
+sha256sum --check mekdad-circular-graph.sif.sha256
 mkdir -p output
-apptainer run \
+apptainer run --cleanenv \
   --bind "$PWD/output:/output" \
   mekdad-circular-graph.sif
 ```
 
-You can also create a local SIF directly from the public GHCR image:
-
-```bash
-apptainer pull mekdad-circular-graph.sif \
-  docker://ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
-```
-
-Or build independently from the repository definition:
+To build independently from the repository definition:
 
 ```bash
 apptainer build circular-graph.sif Apptainer.def
@@ -179,8 +199,8 @@ See [LICENSE](LICENSE).
 The GitHub Actions workflow validates pull requests and publishes the `edge` image whenever `main` changes. To publish a stable Docker image and matching Apptainer SIF, create and push a semantic-version tag:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
-The workflow publishes Docker tags `1.0.0`, `1.0`, `1`, and `latest`, builds and tests the matching source revision with `Apptainer.def`, then creates the corresponding GitHub Release with the SIF attached. No registry password is required because the workflow uses GitHub's repository token.
+For a `v1.1.0` tag, the workflow publishes Docker tags `1.1.0`, `1.1`, `1`, and `latest`, builds and tests the matching source revision with `Apptainer.def`, then creates the corresponding GitHub Release with the SIF and checksum attached. No registry password is required because the workflow uses GitHub's repository token.

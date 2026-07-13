@@ -9,6 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     VIRTUAL_ENV=/opt/venv \
     PATH="/opt/venv/bin:$PATH" \
     MPLBACKEND=Agg \
+    MPLCONFIGDIR=/tmp/matplotlib \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
@@ -27,11 +28,12 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY main.py circular_graph.py node.py utils.py ./
+COPY surface_native_net_matrix.csv labelling.csv region_names.csv color_map.csv ./
 
 RUN useradd --create-home --uid 10001 appuser \
-    && mkdir -p /output /home/appuser/.config/matplotlib \
-    && chown -R appuser:appuser /output /home/appuser
+    && mkdir -p /output \
+    && chown appuser:appuser /output
 
 USER appuser
 
