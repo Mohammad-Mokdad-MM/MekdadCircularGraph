@@ -37,3 +37,7 @@ Thumbs.db
 .coverage
 .pytest_cache/
 *.sqlite
+
+# Generated container and render artifacts
+output/
+*.sif

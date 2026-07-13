@@ -7,7 +7,7 @@ from node import Node
 
 class CircularGraph:
 
-    def __init__(self, adjacency_matrix, colormap=None, labels=None):
+    def __init__(self, adjacency_matrix, colormap=None, labels=None, show=True):
        
         n = len(adjacency_matrix)
         print(f"\nInitializing CircularGraph with {n}x{n} matrix")
@@ -66,7 +66,8 @@ class CircularGraph:
 
         self._create_buttons()
 
-        plt.show()
+        if show:
+            plt.show()
 
     def _create_nodes(self):
         n_expanded = len(self.adjacency_expanded)

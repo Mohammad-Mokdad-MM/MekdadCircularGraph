@@ -1,0 +1,48 @@
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%files
+    requirements.txt /app/requirements.txt
+    main.py /app/main.py
+    circular_graph.py /app/circular_graph.py
+    node.py /app/node.py
+    utils.py /app/utils.py
+    surface_native_net_matrix.csv /app/surface_native_net_matrix.csv
+    labelling.csv /app/labelling.csv
+    region_names.csv /app/region_names.csv
+    color_map.csv /app/color_map.csv
+
+%post
+    apt-get update
+    apt-get install --yes --no-install-recommends \
+        ca-certificates \
+        python3 \
+        python3-tk \
+        python3-venv
+    rm -rf /var/lib/apt/lists/*
+
+    python3 -m venv /opt/venv
+    /opt/venv/bin/pip install --no-cache-dir --upgrade pip
+    /opt/venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+
+%environment
+    export PATH="/opt/venv/bin:$PATH"
+    export MPLBACKEND=Agg
+    export MPLCONFIGDIR=/tmp/matplotlib
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+
+%runscript
+    if [ "$#" -eq 0 ]; then
+        set -- --output /output/circular_graph.png
+    fi
+    exec /opt/venv/bin/python /app/main.py "$@"
+
+%test
+    /opt/venv/bin/python /app/main.py --help >/dev/null
+
+%labels
+    org.opencontainers.image.title Mekdad Circular Graph
+    org.opencontainers.image.description "Interactive and headless brain connectivity visualization"
+    org.opencontainers.image.source https://github.com/Mohammad-Mokdad-MM/MekdadCircularGraph
+    org.opencontainers.image.licenses MIT

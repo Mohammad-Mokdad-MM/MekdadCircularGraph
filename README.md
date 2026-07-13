@@ -1,63 +1,186 @@
-# Mekdad_Circular_Graph
+# Mekdad Circular Graph
 
-This project visualizes brain connectivity as an interactive circular graph.
+This project visualizes brain connectivity as an interactive circular graph. Connections above a configurable threshold are drawn as arcs between regions arranged on a circle.
 
-Connections above a certain threshold are drawn as arcs between regions arranged on a circle.
-You can:
-- Click nodes to toggle their connections (X / O style)
-- Use control buttons to:
-  - Show/Hide all edges
-  - Highlight specific lobes (Frontal, Temporal, Central, Parietal, Occipital – left/right)
+You can click nodes to toggle their connections, show or hide all edges, and highlight the left or right frontal, temporal, central, parietal, and occipital regions.
+
+![Example graph](images/Circle-plot-ShowAll.png)
+
+## Run with Python
+
+Python 3.9 or newer is recommended.
+
+```bash
+python -m venv .venv
+```
+
+Activate the environment on Linux or macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+Or on Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Install the dependencies and open the interactive graph:
+
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
+To render without a graphical display:
+
+```bash
+python main.py --output output/circular_graph.png
+```
+
+Use `python main.py --help` for the threshold and image-resolution options.
+
+## Docker
+
+### Use the prebuilt image
+
+The latest stable image is published on GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
+docker run --rm \
+  --mount type=bind,source="$(pwd)/output",target=/output \
+  ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
+```
+
+Use `:edge` for the newest build from `main`, or a release version such as `:1.0.0` for a reproducible run. The GHCR package must be made public after its first publication for anonymous pulls.
+
+### Build locally
+
+Build the image from the repository directory:
+
+```bash
+docker build -t mekdad-circular-graph .
+```
+
+The container renders `/output/circular_graph.png` by default. On Linux or macOS:
+
+```bash
+mkdir -p output
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --mount type=bind,source="$(pwd)/output",target=/output \
+  mekdad-circular-graph
+```
+
+On Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force output
+docker run --rm `
+  --mount "type=bind,source=$($PWD.Path)\output,target=/output" `
+  mekdad-circular-graph
+```
+
+Arguments after the image name override the default command. For example:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --mount type=bind,source="$(pwd)/output",target=/output \
+  mekdad-circular-graph --threshold 0.9 --dpi 300 \
+  --output /output/threshold-090.png
+```
+
+### Interactive Docker window on Linux
+
+An interactive GUI needs access to the host X11 server:
+
+```bash
+xhost +local:docker
+docker run --rm -it \
+  --env DISPLAY \
+  --env MPLBACKEND=TkAgg \
+  --volume /tmp/.X11-unix:/tmp/.X11-unix:ro \
+  mekdad-circular-graph --interactive
+xhost -local:docker
+```
+
+Docker Desktop on Windows or macOS requires a separately configured X server. Headless image rendering is the portable option on those platforms.
+
+## Apptainer
+
+Apptainer runs on Linux. Each tagged GitHub Release includes a ready-to-run `mekdad-circular-graph.sif` file. Download it from the repository's **Releases** page, then run:
+
+```bash
+mkdir -p output
+apptainer run \
+  --bind "$PWD/output:/output" \
+  mekdad-circular-graph.sif
+```
+
+You can also create a local SIF directly from the public GHCR image:
+
+```bash
+apptainer pull mekdad-circular-graph.sif \
+  docker://ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
+```
+
+Or build independently from the repository definition:
+
+```bash
+apptainer build circular-graph.sif Apptainer.def
+```
+
+If the host requires an unprivileged build, use `apptainer build --fakeroot` or build through an Apptainer remote builder configured by your institution.
+
+Render the default image:
+
+```bash
+mkdir -p output
+apptainer run \
+  --bind "$PWD/output:/output" \
+  circular-graph.sif
+```
+
+Pass application options after the image path:
+
+```bash
+apptainer run \
+  --bind "$PWD/output:/output" \
+  circular-graph.sif --threshold 0.9 \
+  --output /output/threshold-090.png
+```
+
+To open the interactive graph in an X11 desktop session, override the headless Matplotlib backend:
+
+```bash
+apptainer run --env MPLBACKEND=TkAgg circular-graph.sif --interactive
+```
+
+Apptainer normally forwards `DISPLAY` and binds the X11 socket automatically. If the host configuration does not, explicitly bind `/tmp/.X11-unix`.
 
 ## Project structure
 
-- `main.py`  
-  Loads the CSV files, builds the 86×86 adjacency matrix, applies thresholding,
-  reorders nodes via a permutation matrix, and calls `CircularGraph`.
+- `main.py` loads and filters the bundled data and is the command-line entry point.
+- `circular_graph.py` lays out nodes, connections, and interactive controls.
+- `node.py` draws each node and handles click events.
+- `utils.py` contains reusable loading, filtering, reordering, and validation helpers.
+- `surface_native_net_matrix.csv`, `labelling.csv`, `region_names.csv`, and `color_map.csv` contain the bundled connectivity data and display metadata.
+- `Dockerfile` and `Apptainer.def` provide the container builds.
 
-- `circular_graph.py`  
-  Implements the `CircularGraph` class:
-  - Inserts spacer positions between lobes
-  - Creates nodes around the circle
-  - Draws arcs / diametric connections
-  - Creates GUI buttons for lobes and Show/Hide
+## License
 
-- `node.py`  
-  A helper class representing a node on the circle:
-  - Draws node marker
-  - Places and rotates the label
-  - Stores associated connection lines
-  - Toggles visibility on click
+See [LICENSE](LICENSE).
 
-- `utils.py`  
-  Utility functions:
-  - `create_permutation_matrix`
-  - Filtering / validation helpers
+## Publishing a release (maintainers)
 
-- Data files:
-  - `surface_native_net_matrix.csv` – original 123×123 connectivity matrix
-  - `labelling.csv` – region indices (originally 124 entries)
-  - `region_names.csv` – 86 region names
-  - `color_map.csv` – RGB triplets per region
+The GitHub Actions workflow validates pull requests and publishes the `edge` image whenever `main` changes. To publish a stable Docker image and matching Apptainer SIF, create and push a semantic-version tag:
 
-## Features
-- Circular layout of brain regions
-- Colored lobes
-- Clickable nodes
-- Easy dataset replacement
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
-## Example visualization
-
-![Graph](images/Circle-plot-ShowAll.png)
-
-
-## Installation
-
-1. Create and activate a virtual environment (optional but recommended):
-
-   ```bash
-   python -m venv .venv
-   # Windows:
-   .venv\Scripts\activate
-   # Linux/Mac:
-   source .venv/bin/activate
+The workflow publishes Docker tags `1.0.0`, `1.0`, `1`, and `latest`, then creates the corresponding GitHub Release with the SIF attached. No registry password is required because the workflow uses GitHub's repository token.
