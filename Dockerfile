@@ -26,9 +26,9 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY requirements-container.txt .
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir -r requirements-container.txt
 
 COPY main.py circular_graph.py node.py utils.py ./
 COPY surface_native_net_matrix.csv labelling.csv region_names.csv color_map.csv ./

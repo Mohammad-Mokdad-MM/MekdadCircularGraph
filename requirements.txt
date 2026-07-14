@@ -2,6 +2,7 @@
 # Requirements for Mekdad Circular Brain Connectivity Graph
 # For installation:
 #    pip install -r requirements.txt
+# Container builds use the tested versions in requirements-container.txt.
 ############################################################
 
 # Numerical computing and matrix operations

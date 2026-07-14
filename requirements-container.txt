@@ -1,0 +1,6 @@
+# Direct dependency versions verified in the v1.1.1 release containers.
+# Keep requirements.txt for regular source installations and Python 3.9 compatibility.
+numpy==2.4.6
+pandas==3.0.3
+matplotlib==3.11.0
+tornado==6.5.7

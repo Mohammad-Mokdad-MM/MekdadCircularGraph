@@ -2,7 +2,7 @@ Bootstrap: docker
 From: debian:bookworm-slim
 
 %files
-    requirements.txt /app/requirements.txt
+    requirements-container.txt /app/requirements-container.txt
     main.py /app/main.py
     circular_graph.py /app/circular_graph.py
     node.py /app/node.py
@@ -23,7 +23,7 @@ From: debian:bookworm-slim
 
     python3 -m venv /opt/venv
     /opt/venv/bin/pip install --no-cache-dir --upgrade pip
-    /opt/venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+    /opt/venv/bin/pip install --no-cache-dir -r /app/requirements-container.txt
 
 %environment
     export PATH="/opt/venv/bin:$PATH"

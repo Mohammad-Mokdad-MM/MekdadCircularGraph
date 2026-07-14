@@ -53,7 +53,7 @@ Use `python main.py --help` for the threshold and image-resolution options.
 
 ### Use the prebuilt image
 
-The latest stable image is public on GitHub Container Registry. It serves the interactive graph in the user's browser by default.
+The latest stable image is public on GitHub Container Registry. It serves the interactive graph in the user's browser by default. Published container images currently target 64-bit x86 systems (`linux/amd64`).
 
 On Linux or macOS:
 
@@ -73,7 +73,7 @@ docker run --rm `
   ghcr.io/mohammad-mokdad-mm/mekdadcirculargraph:latest
 ```
 
-Open <http://localhost:8000>, then click nodes or the region controls in the graph. Press `Ctrl+C` in the terminal to stop the container. Use `:edge` for the newest build from `main`, or a release version such as `:1.1.0` for a reproducible run.
+Open <http://localhost:8000>, then click nodes or the region controls in the graph. Press `Ctrl+C` in the terminal to stop the container. Use `:edge` for the newest build from `main`, or a release version such as `:1.1.1` for a reproducible run.
 
 To create a PNG instead, mount a writable directory and select output mode:
 
@@ -140,7 +140,7 @@ Docker Desktop on Windows or macOS requires a separately configured X server for
 
 ## Apptainer
 
-Apptainer runs on Linux. Each tagged GitHub Release includes a ready-to-run `mekdad-circular-graph.sif` file and a matching SHA-256 checksum. Download both from the repository's **Releases** page, then start the interactive browser interface:
+Apptainer runs on Linux. Each tagged GitHub Release includes a ready-to-run `mekdad-circular-graph.sif` file and a matching SHA-256 checksum. The published SIF currently targets 64-bit x86 systems (`amd64`). Download both from the repository's **Releases** page, then start the interactive browser interface:
 
 ```bash
 sha256sum --check mekdad-circular-graph.sif.sha256
@@ -148,6 +148,14 @@ apptainer run --cleanenv mekdad-circular-graph.sif
 ```
 
 Open <http://localhost:8000>. Press `Ctrl+C` in the terminal to stop the container.
+
+If Apptainer is running on a remote server or HPC system, create an SSH tunnel from your own computer before starting the container:
+
+```bash
+ssh -L 8000:127.0.0.1:8000 username@server
+```
+
+Keep that SSH session open, run the Apptainer command on the remote server, and open <http://localhost:8000> in the browser on your own computer. If local port `8000` is already in use, choose another local port, for example `-L 8001:127.0.0.1:8000`, and open <http://localhost:8001>.
 
 To build independently from the repository definition:
 
@@ -188,7 +196,7 @@ Apptainer normally forwards `DISPLAY` and binds the X11 socket automatically. If
 - `node.py` draws each node and handles click events.
 - `utils.py` contains reusable loading, filtering, reordering, and validation helpers.
 - `surface_native_net_matrix.csv`, `labelling.csv`, `region_names.csv`, and `color_map.csv` contain the bundled connectivity data and display metadata.
-- `Dockerfile` and `Apptainer.def` provide the container builds.
+- `Dockerfile` and `Apptainer.def` provide the container builds, using the tested versions in `requirements-container.txt`.
 
 ## License
 
@@ -199,8 +207,8 @@ See [LICENSE](LICENSE).
 The GitHub Actions workflow validates pull requests and publishes the `edge` image whenever `main` changes. To publish a stable Docker image and matching Apptainer SIF, create and push a semantic-version tag:
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
 
-For a `v1.1.0` tag, the workflow publishes Docker tags `1.1.0`, `1.1`, `1`, and `latest`, builds and tests the matching source revision with `Apptainer.def`, then creates the corresponding GitHub Release with the SIF and checksum attached. No registry password is required because the workflow uses GitHub's repository token.
+Replace `X.Y.Z` with the new version, such as `1.2.0`. For a `v1.2.0` tag, the workflow publishes Docker tags `1.2.0`, `1.2`, `1`, and `latest`, builds and tests the matching source revision with `Apptainer.def`, then creates the corresponding GitHub Release with the SIF and checksum attached. No registry password is required because the workflow uses GitHub's repository token.
